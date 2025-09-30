@@ -9,6 +9,7 @@ from app.companies.router import router as companies_router
 from app.templates.router import router as templates_router
 from app.send.router import router as send_router
 from app.draft.router import router as draft_router
+import os
 
 app = FastAPI(title="SOLAPI 문자 발송 시스템")
 
@@ -22,15 +23,16 @@ app.include_router(templates_router)
 app.include_router(send_router)
 app.include_router(draft_router)
 
-# 정적 파일 (CSS, JS)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# 정적 파일 (CSS, JS) - 로컬 개발 환경에서만
+if not os.getenv("VERCEL"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
-@app.on_event("startup")
-async def startup_event():
-    """서버 시작 시 데이터베이스 초기화"""
+# 데이터베이스 초기화 (Vercel에서도 작동)
+try:
     init_db()
     print("✅ 데이터베이스 초기화 완료")
+except Exception as e:
+    print(f"⚠️ 데이터베이스 초기화 실패: {e}")
 
 
 @app.get("/", response_class=HTMLResponse)
