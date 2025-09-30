@@ -1,0 +1,42 @@
+body {
+    background-color: #f5f5f5;
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-link {
+    cursor: pointer;
+}
+
+#page-content {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table-actions button {
+    margin: 0 2px;
+}
+
+.preview-box {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+    margin: 10px 0;
+}
+
+.send-list-item {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background: white;
+}
+
+.send-list-item:hover {
+    background: #f8f9fa;
+}
