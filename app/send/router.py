@@ -39,8 +39,13 @@ def preview_message(
     message_content = replace_variables(
         template.content,
         company.name,
-        preview_data.campaign_name
+        preview_data.campaign_name,
+        template.category
     )
+
+    # 추가 메시지가 있으면 붙이기
+    if preview_data.additional_message:
+        message_content = message_content + "\n\n" + preview_data.additional_message
 
     # 통계 계산
     stats = service.calculate_message_stats(message_content)
@@ -69,7 +74,8 @@ def send_bulk_messages(
             user_id=current_user.id,
             template_id=send_data.template_id,
             company_id=item.company_id,
-            campaign_name=item.campaign_name
+            campaign_name=item.campaign_name,
+            additional_message=send_data.additional_message
         )
         results.append({
             "company_id": item.company_id,

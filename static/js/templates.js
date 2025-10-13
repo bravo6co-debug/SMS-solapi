@@ -13,7 +13,10 @@ async function loadTemplatesPage() {
         </div>
 
         <div class="alert alert-info">
-            <strong>사용 가능한 변수:</strong> {발주사명}, {캠페인명}<br>
+            <strong>사용 가능한 변수:</strong><br>
+            • {발주사명} - 모든 템플릿에서 사용 가능<br>
+            • {캠페인명} - 검수완료, 진행률50%, 진행률100%, 기타(캠페인명사용) 템플릿에서만 사용<br>
+            • "기타" 카테고리는 {발주사명}만 사용 가능<br>
             <strong>최대 등록 개수:</strong> <span id="template-count">0</span> / 10개
         </div>
 
@@ -38,12 +41,13 @@ async function loadTemplatesPage() {
                             <input type="hidden" id="template-id">
                             <div class="mb-3">
                                 <label class="form-label">카테고리 *</label>
-                                <select class="form-select" id="template-category" required>
+                                <select class="form-select" id="template-category" required onchange="onTemplateCategoryChange()">
                                     <option value="">선택하세요</option>
                                     <option value="검수완료">검수완료</option>
                                     <option value="진행률50%">진행률50%</option>
                                     <option value="진행률100%">진행률100%</option>
-                                    <option value="기타">기타</option>
+                                    <option value="기타">기타 (캠페인명 사용 안함)</option>
+                                    <option value="기타(캠페인명사용)">기타 (캠페인명 사용함)</option>
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -53,7 +57,7 @@ async function loadTemplatesPage() {
                             <div class="mb-3">
                                 <label class="form-label">내용 *</label>
                                 <textarea class="form-control" id="template-content" rows="6" required placeholder="예) {발주사명}님, {캠페인명} 검수가 완료되었습니다."></textarea>
-                                <div class="form-text">
+                                <div class="form-text" id="template-variable-guide">
                                     변수: {발주사명}, {캠페인명}
                                 </div>
                             </div>
@@ -206,5 +210,26 @@ async function deleteTemplate(id, title) {
         loadTemplates();
     } catch (error) {
         alert('삭제 실패: ' + error.message);
+    }
+}
+
+// 템플릿 카테고리 변경 시 가이드 업데이트
+function onTemplateCategoryChange() {
+    const category = document.getElementById('template-category').value;
+    const guideDiv = document.getElementById('template-variable-guide');
+    const contentTextarea = document.getElementById('template-content');
+
+    if (category === '기타') {
+        guideDiv.innerHTML = '변수: {발주사명} (캠페인명 변수는 사용하지 마세요)';
+        guideDiv.className = 'form-text text-warning';
+        contentTextarea.placeholder = '예) {발주사명}님, 새해 복 많이 받으세요!';
+    } else if (category === '기타(캠페인명사용)') {
+        guideDiv.innerHTML = '변수: {발주사명}, {캠페인명}';
+        guideDiv.className = 'form-text';
+        contentTextarea.placeholder = '예) {발주사명}님, {캠페인명} 관련 문의가 있습니다. 전화 요청 드립니다.';
+    } else {
+        guideDiv.innerHTML = '변수: {발주사명}, {캠페인명}';
+        guideDiv.className = 'form-text';
+        contentTextarea.placeholder = '예) {발주사명}님, {캠페인명} 검수가 완료되었습니다.';
     }
 }

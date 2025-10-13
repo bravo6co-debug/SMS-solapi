@@ -30,11 +30,16 @@ def create_user(db: Session, user_data: UserCreate) -> User:
 
 def authenticate_user(db: Session, username: str, password: str) -> User | None:
     """사용자 인증"""
+    print(f"[DEBUG] 인증 시도: username={username}")
     user = db.query(User).filter(User.username == username).first()
     if not user:
+        print(f"[DEBUG] 사용자를 찾을 수 없음: {username}")
         return None
+    print(f"[DEBUG] 사용자 찾음: {user.username}, ID: {user.id}")
     if not verify_password(password, user.password):
+        print(f"[DEBUG] 비밀번호 불일치: {username}")
         return None
+    print(f"[DEBUG] 인증 성공: {username}")
     return user
 
 

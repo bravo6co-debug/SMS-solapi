@@ -3,6 +3,7 @@
 let sendTemplates = [];
 let sendCompanies = [];
 let sendList = [];
+let selectedTemplateCategory = null; // 선택된 템플릿 카테고리
 
 async function loadSendPage() {
     const content = document.getElementById('page-content');
@@ -23,6 +24,11 @@ async function loadSendPage() {
                         <div class="text-muted small mb-2">템플릿 내용:</div>
                         <pre id="template-content-preview" style="white-space: pre-wrap; font-family: inherit;"></pre>
                     </div>
+                    <div class="mt-3">
+                        <label class="form-label">추가 메시지 (선택사항)</label>
+                        <textarea class="form-control" id="additional-message" rows="3" placeholder="템플릿 내용 뒤에 추가할 메시지를 입력하세요"></textarea>
+                        <div class="text-muted small mt-1">이 메시지는 템플릿 내용 뒤에 자동으로 추가됩니다.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -33,20 +39,49 @@ async function loadSendPage() {
                 <strong>2. 발송 대상 추가</strong>
             </div>
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-5">
-                        <label class="form-label">발주사</label>
-                        <input type="text" class="form-control" id="company-search-input" placeholder="발주사명 검색..." oninput="searchCompaniesForSend()">
-                        <div id="company-search-results" class="list-group mt-2" style="max-height: 200px; overflow-y: auto; display: none;"></div>
-                        <input type="hidden" id="selected-company-id">
-                        <input type="text" class="form-control mt-2" id="selected-company-name" placeholder="선택된 발주사" readonly>
+                <!-- 전체 선택 옵션 -->
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="select-all-companies" onchange="toggleAllCompaniesMode()">
+                        <label class="form-check-label" for="select-all-companies">
+                            <strong>전체 발주사 선택</strong> (<span id="total-companies-count">0</span>개)
+                        </label>
                     </div>
-                    <div class="col-md-5">
-                        <label class="form-label">캠페인명</label>
-                        <input type="text" class="form-control" id="campaign-name" placeholder="캠페인명 입력">
+                </div>
+
+                <!-- 전체 선택 모드 -->
+                <div id="all-companies-mode" style="display: none;">
+                    <div class="alert alert-info">
+                        모든 발주사에게 동일한 캠페인명으로 문자를 발송합니다.
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button class="btn btn-primary w-100" onclick="addToSendList()">추가</button>
+                    <div class="row g-3">
+                        <div class="col-md-10">
+                            <label class="form-label">캠페인명 (전체 공통)</label>
+                            <input type="text" class="form-control" id="campaign-name-all" placeholder="캠페인명 입력">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" onclick="addAllCompanies()">전체 추가</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 개별 선택 모드 -->
+                <div id="individual-mode">
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label class="form-label">발주사</label>
+                            <input type="text" class="form-control" id="company-search-input" placeholder="발주사명 검색..." oninput="searchCompaniesForSend()">
+                            <div id="company-search-results" class="list-group mt-2" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+                            <input type="hidden" id="selected-company-id">
+                            <input type="text" class="form-control mt-2" id="selected-company-name" placeholder="선택된 발주사" readonly>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">캠페인명</label>
+                            <input type="text" class="form-control" id="campaign-name" placeholder="캠페인명 입력">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" onclick="addToSendList()">추가</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -129,6 +164,11 @@ async function loadTemplatesForSend() {
 async function loadCompaniesForSend() {
     try {
         sendCompanies = await apiCall('/api/companies');
+        // 전체 발주사 개수 표시
+        const totalCount = document.getElementById('total-companies-count');
+        if (totalCount) {
+            totalCount.textContent = sendCompanies.length;
+        }
     } catch (error) {
         alert('발주사 목록을 불러오는데 실패했습니다: ' + error.message);
     }
@@ -141,14 +181,50 @@ function onTemplateChange() {
     if (templateId) {
         const template = sendTemplates.find(t => t.id == templateId);
         if (template) {
+            selectedTemplateCategory = template.category;
             document.getElementById('template-content-preview').textContent = template.content;
             previewDiv.style.display = 'block';
+
+            // "기타" 카테고리일 경우 캠페인명 입력 필드 선택사항으로 변경
+            updateCampaignNameField();
         }
     } else {
+        selectedTemplateCategory = null;
         previewDiv.style.display = 'none';
     }
 
     updateSendButton();
+}
+
+// 캠페인명 입력 필드 상태 업데이트
+function updateCampaignNameField() {
+    const campaignNameInput = document.getElementById('campaign-name');
+    const campaignNameAllInput = document.getElementById('campaign-name-all');
+
+    // "기타" 카테고리만 캠페인명 선택사항 (기타(캠페인명사용)은 필수)
+    if (selectedTemplateCategory === '기타') {
+        // 개별 선택 모드
+        if (campaignNameInput) {
+            campaignNameInput.placeholder = '(선택사항)';
+            campaignNameInput.removeAttribute('required');
+        }
+        // 전체 선택 모드
+        if (campaignNameAllInput) {
+            campaignNameAllInput.placeholder = '(선택사항)';
+            campaignNameAllInput.removeAttribute('required');
+        }
+    } else {
+        // 개별 선택 모드
+        if (campaignNameInput) {
+            campaignNameInput.placeholder = '캠페인명 입력';
+            campaignNameInput.setAttribute('required', 'required');
+        }
+        // 전체 선택 모드
+        if (campaignNameAllInput) {
+            campaignNameAllInput.placeholder = '캠페인명 입력';
+            campaignNameAllInput.setAttribute('required', 'required');
+        }
+    }
 }
 
 function searchCompaniesForSend() {
@@ -202,7 +278,8 @@ function addToSendList() {
         return;
     }
 
-    if (!campaignName) {
+    // "기타" 카테고리가 아닐 경우에만 캠페인명 필수
+    if (selectedTemplateCategory !== '기타' && !campaignName) {
         alert('캠페인명을 입력하세요.');
         return;
     }
@@ -219,7 +296,7 @@ function addToSendList() {
     sendList.push({
         company_id: parseInt(companyId),
         company_name: company.name,
-        campaign_name: campaignName
+        campaign_name: campaignName || ''  // 기타 카테고리는 빈 값 허용
     });
 
     // 입력 초기화
@@ -263,12 +340,14 @@ function removeFromSendList(index) {
 async function previewMessage(index) {
     const templateId = document.getElementById('send-template').value;
     const item = sendList[index];
+    const additionalMessage = document.getElementById('additional-message').value;
 
     try {
         const preview = await apiCall('/api/send/preview', 'POST', {
             template_id: parseInt(templateId),
             company_id: item.company_id,
-            campaign_name: item.campaign_name
+            campaign_name: item.campaign_name,
+            additional_message: additionalMessage
         });
 
         document.getElementById('preview-company').textContent = preview.company_name;
@@ -292,6 +371,7 @@ function updateSendButton() {
 
 async function sendBulkMessages() {
     const templateId = document.getElementById('send-template').value;
+    const additionalMessage = document.getElementById('additional-message').value;
 
     if (!templateId || sendList.length === 0) {
         alert('템플릿과 발송 대상을 확인하세요.');
@@ -305,7 +385,8 @@ async function sendBulkMessages() {
     try {
         const result = await apiCall('/api/send/bulk', 'POST', {
             template_id: parseInt(templateId),
-            items: sendList
+            items: sendList,
+            additional_message: additionalMessage
         });
 
         alert(`발송 완료\n성공: ${result.success}건\n실패: ${result.fail}건`);
@@ -371,4 +452,88 @@ async function loadDraft() {
     } catch (error) {
         alert('불러오기 실패: ' + error.message);
     }
+}
+
+// 전체 발주사 선택 모드 토글
+function toggleAllCompaniesMode() {
+    const checkbox = document.getElementById('select-all-companies');
+    const allMode = document.getElementById('all-companies-mode');
+    const individualMode = document.getElementById('individual-mode');
+
+    if (checkbox.checked) {
+        // 전체 선택 모드
+        allMode.style.display = 'block';
+        individualMode.style.display = 'none';
+
+        // 개별 선택 입력 필드 초기화
+        document.getElementById('company-search-input').value = '';
+        document.getElementById('selected-company-id').value = '';
+        document.getElementById('selected-company-name').value = '';
+        document.getElementById('campaign-name').value = '';
+        document.getElementById('company-search-results').style.display = 'none';
+    } else {
+        // 개별 선택 모드
+        allMode.style.display = 'none';
+        individualMode.style.display = 'block';
+
+        // 전체 선택 입력 필드 초기화
+        document.getElementById('campaign-name-all').value = '';
+    }
+}
+
+// 전체 발주사 일괄 추가
+function addAllCompanies() {
+    const templateId = document.getElementById('send-template').value;
+    const campaignName = document.getElementById('campaign-name-all').value;
+
+    if (!templateId) {
+        alert('템플릿을 선택하세요.');
+        return;
+    }
+
+    // "기타" 카테고리가 아닐 경우에만 캠페인명 필수
+    if (selectedTemplateCategory !== '기타' && !campaignName) {
+        alert('캠페인명을 입력하세요.');
+        return;
+    }
+
+    if (sendCompanies.length === 0) {
+        alert('발주사 목록이 없습니다.');
+        return;
+    }
+
+    // 확인 메시지
+    const confirmMsg = selectedTemplateCategory === '기타'
+        ? `모든 발주사 ${sendCompanies.length}개에게 추가하시겠습니까?`
+        : `모든 발주사 ${sendCompanies.length}개에게 동일한 캠페인명으로 추가하시겠습니까?\n\n캠페인명: ${campaignName}`;
+
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+
+    // 전체 발주사를 발송 목록에 추가
+    sendCompanies.forEach(company => {
+        // 중복 체크 (이미 추가된 발주사는 스킵)
+        const exists = sendList.find(item => item.company_id === company.id);
+        if (!exists) {
+            sendList.push({
+                company_id: company.id,
+                company_name: company.name,
+                campaign_name: campaignName || ''  // 기타 카테고리는 빈 값 허용
+            });
+        }
+    });
+
+    // 입력 초기화
+    document.getElementById('campaign-name-all').value = '';
+
+    // 체크박스 해제 및 개별 모드로 전환
+    document.getElementById('select-all-companies').checked = false;
+    toggleAllCompaniesMode();
+
+    renderSendList();
+    updateSendButton();
+
+    const addedCount = sendList.length;
+    alert(`${addedCount}개 발주사가 발송 목록에 추가되었습니다.`);
 }

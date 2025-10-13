@@ -65,8 +65,20 @@ def delete_template(db: Session, template_id: int) -> bool:
     return True
 
 
-def replace_variables(content: str, company_name: str, campaign_name: str) -> str:
-    """템플릿 변수 치환"""
+def replace_variables(content: str, company_name: str, campaign_name: str = "", category: str = None) -> str:
+    """
+    템플릿 변수 치환
+
+    Args:
+        content: 템플릿 내용
+        company_name: 발주사명
+        campaign_name: 캠페인명 (기타 카테고리는 선택사항)
+        category: 템플릿 카테고리 (기타일 경우 캠페인명 치환 안함)
+    """
     result = content.replace("{발주사명}", company_name)
-    result = result.replace("{캠페인명}", campaign_name)
+
+    # "기타" 카테고리가 아닐 때만 캠페인명 치환 (기타(캠페인명사용)은 치환함)
+    if category != "기타":
+        result = result.replace("{캠페인명}", campaign_name)
+
     return result

@@ -53,15 +53,29 @@ class CompanyResponse(BaseModel):
         from_attributes = True
 
 
+class BulkUploadError(BaseModel):
+    row: int
+    name: Optional[str]
+    phone: Optional[str]
+    company_id: Optional[str]
+    error: str
+
+
+class CompanyBulkUploadResult(BaseModel):
+    success_count: int
+    error_count: int
+    errors: List[BulkUploadError]
+
+
 # Template Schemas
 class TemplateCreate(BaseModel):
-    category: str = Field(..., pattern="^(검수완료|진행률50%|진행률100%|기타)$")
+    category: str = Field(..., pattern="^(검수완료|진행률50%|진행률100%|기타|기타\\(캠페인명사용\\))$")
     title: str = Field(..., max_length=100)
     content: str
 
 
 class TemplateUpdate(BaseModel):
-    category: Optional[str] = Field(None, pattern="^(검수완료|진행률50%|진행률100%|기타)$")
+    category: Optional[str] = Field(None, pattern="^(검수완료|진행률50%|진행률100%|기타|기타\\(캠페인명사용\\))$")
     title: Optional[str] = Field(None, max_length=100)
     content: Optional[str] = None
 
@@ -109,12 +123,14 @@ class SendItem(BaseModel):
 class SendBulkRequest(BaseModel):
     template_id: int
     items: List[SendItem]
+    additional_message: Optional[str] = None
 
 
 class PreviewRequest(BaseModel):
     template_id: int
     company_id: int
     campaign_name: str
+    additional_message: Optional[str] = None
 
 
 class PreviewResponse(BaseModel):

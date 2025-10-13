@@ -22,6 +22,12 @@ async function apiCall(url, method = 'GET', body = null) {
     const data = await response.json();
 
     if (!response.ok) {
+        // 401 에러 시 자동 로그아웃 처리
+        if (response.status === 401 && state.currentUser) {
+            console.log('[AUTH] 세션 만료 - 자동 로그아웃');
+            state.currentUser = null;
+            showLoginPage();
+        }
         throw new Error(data.detail || '요청 실패');
     }
 

@@ -10,7 +10,8 @@ def send_message_with_retry(
     user_id: int,
     template_id: int,
     company_id: int,
-    campaign_name: str
+    campaign_name: str,
+    additional_message: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     문자 발송 (재발송 포함)
@@ -47,8 +48,13 @@ def send_message_with_retry(
     message_content = replace_variables(
         template.content,
         company.name,
-        campaign_name
+        campaign_name,
+        template.category
     )
+
+    # 추가 메시지가 있으면 붙이기
+    if additional_message:
+        message_content = message_content + "\n\n" + additional_message
 
     # 1차 발송 시도
     result = solapi_client.send_message(company.phone, message_content)

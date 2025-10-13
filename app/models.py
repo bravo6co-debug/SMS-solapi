@@ -37,7 +37,7 @@ class Template(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "category IN ('검수완료', '진행률50%', '진행률100%', '기타')",
+            "category IN ('검수완료', '진행률50%', '진행률100%', '기타', '기타(캠페인명사용)')",
             name="chk_category"
         ),
     )
