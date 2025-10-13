@@ -1,10 +1,26 @@
+# FastAPI 및 웹 프레임워크
 fastapi>=0.115.0
-uvicorn>=0.32.0
+uvicorn[standard]>=0.32.0
+
+# 데이터베이스
 sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.10
+
+# Pydantic 및 설정
 pydantic>=2.10.0
 pydantic-settings>=2.6.0
-python-multipart>=0.0.20
+
+# 보안 및 인증
 bcrypt>=4.2.0
+itsdangerous>=2.2.0
+
+# 파일 처리
+python-multipart>=0.0.20
+openpyxl>=3.1.0
+
+# 외부 API
 solapi>=5.0.2
+requests>=2.32.0
+
+# 환경 변수
 python-dotenv>=1.0.0
-psycopg2-binary>=2.9.10
