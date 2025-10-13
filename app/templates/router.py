@@ -57,15 +57,26 @@ def create_template(
     current_user = Depends(get_current_user)
 ):
     """템플릿 등록"""
-    # 최대 10개 제한 체크
-    if not service.can_create_template(db):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="템플릿은 최대 10개까지만 등록할 수 있습니다"
-        )
+    try:
+        # 최대 10개 제한 체크
+        if not service.can_create_template(db):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="템플릿은 최대 10개까지만 등록할 수 있습니다"
+            )
 
-    template = service.create_template(db, template_data)
-    return template
+        template = service.create_template(db, template_data)
+        return template
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ 템플릿 등록 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"템플릿 등록 중 오류가 발생했습니다: {str(e)}"
+        )
 
 
 @router.put("/{template_id}", response_model=TemplateResponse)

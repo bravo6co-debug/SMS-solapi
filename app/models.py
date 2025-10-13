@@ -35,12 +35,8 @@ class Template(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    __table_args__ = (
-        CheckConstraint(
-            "category IN ('검수완료', '진행률50%', '진행률100%', '기타', '기타(캠페인명사용)')",
-            name="chk_category"
-        ),
-    )
+    # CheckConstraint 제거 - DB 마이그레이션 이슈로 인해 애플리케이션 레벨에서 검증
+    # 허용 카테고리: 검수완료, 진행률50%, 진행률100%, 기타, 기타(캠페인명사용)
 
 
 class Draft(Base):
