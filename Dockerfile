@@ -24,6 +24,6 @@ COPY . .
 EXPOSE 8000
 
 # 애플리케이션 실행
-# Railway는 $PORT 환경변수를 자동 주입하므로 sh -c로 실행
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# start.py 스크립트가 PORT 환경변수를 처리
+CMD ["python", "start.py"]
 
