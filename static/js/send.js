@@ -227,33 +227,37 @@ function updateCampaignNameField() {
     }
 }
 
-function searchCompaniesForSend() {
+async function searchCompaniesForSend() {
     const input = document.getElementById('company-search-input');
     const resultsDiv = document.getElementById('company-search-results');
-    const query = input.value.toLowerCase();
+    const query = input.value.trim();
 
     if (!query) {
         resultsDiv.style.display = 'none';
         return;
     }
 
-    const filtered = sendCompanies.filter(c =>
-        c.name.toLowerCase().includes(query) ||
-        c.company_id.toLowerCase().includes(query)
-    );
+    try {
+        // 백엔드 API를 통해 검색 (발주사명 또는 아이디로 검색)
+        const searchResults = await apiCall(`/api/companies?search=${encodeURIComponent(query)}`);
 
-    if (filtered.length === 0) {
-        resultsDiv.innerHTML = '<div class="list-group-item">검색 결과가 없습니다</div>';
+        if (searchResults.length === 0) {
+            resultsDiv.innerHTML = '<div class="list-group-item">검색 결과가 없습니다</div>';
+            resultsDiv.style.display = 'block';
+            return;
+        }
+
+        resultsDiv.innerHTML = searchResults.map(company => `
+            <button type="button" class="list-group-item list-group-item-action" onclick="selectCompany(${company.id}, '${escapeHtml(company.name)}')">
+                ${escapeHtml(company.name)} (${escapeHtml(company.company_id)})
+            </button>
+        `).join('');
         resultsDiv.style.display = 'block';
-        return;
+    } catch (error) {
+        console.error('발주사 검색 실패:', error);
+        resultsDiv.innerHTML = '<div class="list-group-item text-danger">검색 중 오류가 발생했습니다</div>';
+        resultsDiv.style.display = 'block';
     }
-
-    resultsDiv.innerHTML = filtered.map(company => `
-        <button type="button" class="list-group-item list-group-item-action" onclick="selectCompany(${company.id}, '${escapeHtml(company.name)}')">
-            ${escapeHtml(company.name)} (${escapeHtml(company.company_id)})
-        </button>
-    `).join('');
-    resultsDiv.style.display = 'block';
 }
 
 function selectCompany(id, name) {
