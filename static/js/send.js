@@ -70,7 +70,7 @@ async function loadSendPage() {
                     <div class="row g-3">
                         <div class="col-md-5">
                             <label class="form-label">발주사</label>
-                            <input type="text" class="form-control" id="company-search-input" placeholder="발주사명 검색..." oninput="searchCompaniesForSend()">
+                            <input type="text" class="form-control" id="company-search-input" placeholder="발주사명 또는 아이디 검색..." oninput="searchCompaniesForSend()">
                             <div id="company-search-results" class="list-group mt-2" style="max-height: 200px; overflow-y: auto; display: none;"></div>
                             <input type="hidden" id="selected-company-id">
                             <input type="text" class="form-control mt-2" id="selected-company-name" placeholder="선택된 발주사" readonly>
