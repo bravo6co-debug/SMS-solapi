@@ -16,7 +16,9 @@ def main():
         "uvicorn",
         "main:app",
         "--host", "0.0.0.0",
-        "--port", port
+        "--port", port,
+        "--timeout-keep-alive", "300",  # Keep-alive 타임아웃 5분
+        "--timeout-graceful-shutdown", "60"  # Graceful shutdown 타임아웃 1분
     ]
 
     print(f"Starting uvicorn on port {port}...")

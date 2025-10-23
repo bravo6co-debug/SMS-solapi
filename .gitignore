@@ -45,3 +45,30 @@ Thumbs.db
 
 # Vercel
 .vercel
+
+# Windows
+nul
+
+# Test files
+test_*.py
+test_*.html
+*_test.py
+check_*.py
+create_*.py
+recreate_*.py
+setup_*.py
+init_*.py
+run_*.py
+debug.*
+start.bat
+start.sh
+
+# Docker dev files
+docker-compose.simple.yml
+Dockerfile.simple
+env.local.example
+init.sql
+
+# Documentation (dev guides)
+CLAUDE_DEV_GUIDE.md
+DOCKER_GUIDE.md

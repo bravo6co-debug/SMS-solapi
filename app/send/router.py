@@ -60,16 +60,20 @@ def preview_message(
 
 
 @router.post("/bulk")
-def send_bulk_messages(
+async def send_bulk_messages(
     send_data: SendBulkRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """일괄 발송"""
+    """일괄 발송 (비동기)"""
+    import asyncio
+    from concurrent.futures import ThreadPoolExecutor
+
     results = []
 
-    for item in send_data.items:
-        result = service.send_message_with_retry(
+    def send_single_message(item):
+        """개별 메시지 발송 (스레드에서 실행)"""
+        return service.send_message_with_retry(
             db=db,
             user_id=current_user.id,
             template_id=send_data.template_id,
@@ -77,14 +81,37 @@ def send_bulk_messages(
             campaign_name=item.campaign_name,
             additional_message=send_data.additional_message
         )
-        results.append({
-            "company_id": item.company_id,
-            "campaign_name": item.campaign_name,
-            "status": result["status"],
-            "success": result["success"],
-            "message_id": result.get("message_id"),
-            "error": result.get("error")
-        })
+
+    # 병렬 처리 (최대 5개씩 동시 발송)
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        loop = asyncio.get_event_loop()
+        tasks = []
+
+        for item in send_data.items:
+            task = loop.run_in_executor(executor, send_single_message, item)
+            tasks.append((item, task))
+
+        # 모든 작업 완료 대기
+        for item, task in tasks:
+            try:
+                result = await task
+                results.append({
+                    "company_id": item.company_id,
+                    "campaign_name": item.campaign_name,
+                    "status": result["status"],
+                    "success": result["success"],
+                    "message_id": result.get("message_id"),
+                    "error": result.get("error")
+                })
+            except Exception as e:
+                results.append({
+                    "company_id": item.company_id,
+                    "campaign_name": item.campaign_name,
+                    "status": "실패",
+                    "success": False,
+                    "message_id": None,
+                    "error": str(e)
+                })
 
     # 성공/실패 통계
     success_count = sum(1 for r in results if r["success"])

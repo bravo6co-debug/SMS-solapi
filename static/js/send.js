@@ -386,21 +386,72 @@ async function sendBulkMessages() {
         return;
     }
 
+    // 발송 버튼 비활성화
+    const sendBtn = document.getElementById('send-btn');
+    const originalText = sendBtn.innerHTML;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '📤 발송 중...';
+
     try {
+        // 진행 상황 표시 엘리먼트 추가
+        const progressDiv = document.createElement('div');
+        progressDiv.id = 'send-progress';
+        progressDiv.className = 'alert alert-info mt-3';
+        progressDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div>
+                    <strong>${sendList.length}건 발송 중...</strong>
+                    <div class="small">대량 발송은 최대 5분 정도 소요될 수 있습니다.</div>
+                </div>
+            </div>
+        `;
+        sendBtn.parentElement.appendChild(progressDiv);
+
         const result = await apiCall('/api/send/bulk', 'POST', {
             template_id: parseInt(templateId),
             items: sendList,
             additional_message: additionalMessage
         });
 
-        alert(`발송 완료\n성공: ${result.success}건\n실패: ${result.fail}건`);
+        // 진행 상황 표시 제거
+        if (progressDiv.parentElement) {
+            progressDiv.remove();
+        }
+
+        // 결과 표시
+        let resultMessage = `발송 완료!\n\n총 ${result.total}건\n성공: ${result.success}건\n실패: ${result.fail}건`;
+
+        // 실패한 발송이 있으면 상세 정보 표시
+        if (result.fail > 0) {
+            const failedItems = result.results.filter(r => !r.success);
+            resultMessage += '\n\n실패한 발송:\n';
+            failedItems.forEach((item, idx) => {
+                const company = sendList.find(s => s.company_id === item.company_id);
+                resultMessage += `${idx + 1}. ${company.company_name} - ${item.error}\n`;
+            });
+        }
+
+        alert(resultMessage);
 
         // 발송 목록 초기화
         sendList = [];
         renderSendList();
         updateSendButton();
     } catch (error) {
+        // 진행 상황 표시 제거
+        const progressDiv = document.getElementById('send-progress');
+        if (progressDiv && progressDiv.parentElement) {
+            progressDiv.remove();
+        }
+
         alert('발송 실패: ' + error.message);
+    } finally {
+        // 발송 버튼 활성화
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalText;
     }
 }
 

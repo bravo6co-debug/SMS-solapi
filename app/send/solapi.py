@@ -67,7 +67,7 @@ class SolapiClient:
                 self.api_url,
                 json=message_data,
                 headers=headers,
-                timeout=10
+                timeout=30  # 타임아웃을 30초로 증가
             )
 
             if response.status_code == 200:
