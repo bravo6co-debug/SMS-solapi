@@ -55,15 +55,25 @@ def update_company(db: Session, company_id: int, company_data: CompanyUpdate) ->
     return db_company
 
 
-def delete_company(db: Session, company_id: int) -> bool:
-    """발주사 삭제"""
+def delete_company(db: Session, company_id: int) -> Tuple[bool, Optional[str]]:
+    """발주사 삭제 (발송 이력 확인)"""
+    from app.models import SendHistory
+
     db_company = get_company_by_id(db, company_id)
     if not db_company:
-        return False
+        return False, "발주사를 찾을 수 없습니다"
+
+    # 발송 이력 확인
+    history_count = db.query(SendHistory)\
+        .filter(SendHistory.company_id == company_id)\
+        .count()
+
+    if history_count > 0:
+        return False, f"이 발주사의 발송 이력이 {history_count}건 존재하여 삭제할 수 없습니다"
 
     db.delete(db_company)
     db.commit()
-    return True
+    return True, None
 
 
 def get_companies_count(db: Session) -> int:

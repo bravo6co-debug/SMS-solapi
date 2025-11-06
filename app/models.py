@@ -43,8 +43,8 @@ class Draft(Base):
     __tablename__ = "draft"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    template_id = Column(Integer, ForeignKey("templates.id"))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    template_id = Column(Integer, ForeignKey("templates.id", ondelete="CASCADE"))
     items = Column(Text, nullable=False)  # JSON 형식
     saved_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -57,9 +57,9 @@ class SendHistory(Base):
     __tablename__ = "send_history"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    template_id = Column(Integer, ForeignKey("templates.id"), nullable=False)
-    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
+    template_id = Column(Integer, ForeignKey("templates.id", ondelete="RESTRICT"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="RESTRICT"), nullable=False)
     campaign_name = Column(String(200), nullable=False)
     message_content = Column(Text, nullable=False)
     status = Column(String(20), nullable=False)

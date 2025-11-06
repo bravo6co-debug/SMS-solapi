@@ -92,11 +92,16 @@ def delete_company(
     current_user = Depends(get_current_user)
 ):
     """발주사 삭제"""
-    success = service.delete_company(db, company_id)
+    success, error_message = service.delete_company(db, company_id)
     if not success:
+        if error_message and "발송 이력" in error_message:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=error_message
+            )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="발주사를 찾을 수 없습니다"
+            detail=error_message or "발주사를 찾을 수 없습니다"
         )
     return None
 
