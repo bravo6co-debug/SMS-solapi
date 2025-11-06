@@ -59,7 +59,7 @@ class SendHistory(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
     template_id = Column(Integer, ForeignKey("templates.id", ondelete="RESTRICT"), nullable=False)
-    company_id = Column(Integer, ForeignKey("companies.id", ondelete="RESTRICT"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     campaign_name = Column(String(200), nullable=False)
     message_content = Column(Text, nullable=False)
     status = Column(String(20), nullable=False)
