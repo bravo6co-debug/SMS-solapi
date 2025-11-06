@@ -19,7 +19,12 @@ async function apiCall(url, method = 'GET', body = null) {
     }
 
     const response = await fetch(url, options);
-    const data = await response.json();
+
+    // 204 No Content 응답은 body가 없으므로 JSON 파싱 건너뛰기
+    let data = null;
+    if (response.status !== 204) {
+        data = await response.json();
+    }
 
     if (!response.ok) {
         // 401 에러 시 자동 로그아웃 처리
@@ -28,7 +33,7 @@ async function apiCall(url, method = 'GET', body = null) {
             state.currentUser = null;
             showLoginPage();
         }
-        throw new Error(data.detail || '요청 실패');
+        throw new Error(data?.detail || '요청 실패');
     }
 
     return data;
