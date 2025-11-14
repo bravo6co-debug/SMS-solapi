@@ -270,6 +270,7 @@ function selectCompany(id, name) {
 function addToSendList() {
     const templateId = document.getElementById('send-template').value;
     const companyId = document.getElementById('selected-company-id').value;
+    const companyName = document.getElementById('selected-company-name').value;
     const campaignName = document.getElementById('campaign-name').value;
 
     if (!templateId) {
@@ -296,10 +297,10 @@ function addToSendList() {
         }
     }
 
-    const company = sendCompanies.find(c => c.id == companyId);
+    // selected-company-name 필드의 값을 직접 사용 (신규 추가 발주사도 처리 가능)
     sendList.push({
         company_id: parseInt(companyId),
-        company_name: company.name,
+        company_name: companyName,
         campaign_name: campaignName || ''  // 기타 카테고리는 빈 값 허용
     });
 
